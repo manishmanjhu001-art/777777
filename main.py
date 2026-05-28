@@ -1,8 +1,9 @@
 from config import Config
 from pyrogram import Client as bot, idle
-from pyrogram.errors import FloodWait
 import asyncio
 import logging
+from flask import Flask
+from threading import Thread
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,6 +15,18 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.info("Live log streaming to telegram.")
 
 plugins = dict(root="plugins")
+
+# Flask Web Server For Koyeb Health Check
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot Running"
+
+def run_web():
+    app.run(host="0.0.0.0", port=8000)
+
+Thread(target=run_web).start()
 
 if __name__ == "__main__":
 
@@ -29,34 +42,23 @@ if __name__ == "__main__":
 
     async def main():
 
-        while True:
+        await bot.start()
 
+        bot_info = await bot.get_me()
+
+        LOGGER.info(f"<--- @{bot_info.username} Started --->")
+
+        for user_id in Config.AUTH_USERS:
             try:
-                await bot.start()
-
-                bot_info = await bot.get_me()
-                LOGGER.info(f"<--- @{bot_info.username} Started --->")
-
-                for user_id in Config.AUTH_USERS:
-                    try:
-                        await bot.send_message(
-                            chat_id=user_id,
-                            text=f"__Congrats! You Are DRM member ... if You get any error then contact me - {Config.CREDIT}__ "
-                        )
-                    except Exception as e:
-                        LOGGER.error(f"Failed to send message to user {user_id}: {e}")
-                        continue
-
-                await idle()
-                break
-
-            except FloodWait as e:
-                LOGGER.warning(f"FloodWait: Sleeping for {e.value} seconds")
-                await asyncio.sleep(e.value)
-
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=f"__Congrats! You Are DRM member ... if You get any error then contact me - {Config.CREDIT}__ "
+                )
             except Exception as e:
-                LOGGER.error(e)
-                await asyncio.sleep(10)
+                LOGGER.error(f"Failed to send message to user {user_id}: {e}")
+                continue
+
+        await idle()
 
     asyncio.get_event_loop().run_until_complete(main())
 
