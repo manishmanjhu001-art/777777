@@ -24,7 +24,22 @@ if __name__ == "__main__":
         workers=10,
     )
     async def main():
+        from pyrogram.errors import FloodWait
+import asyncio
+
+while True:
+    try:
         await bot.start()
+        print("Bot Started")
+        break
+
+    except FloodWait as e:
+        print(f"FloodWait: Sleeping {e.value} seconds")
+        await asyncio.sleep(e.value)
+
+    except Exception as e:
+        print(e)
+        await asyncio.sleep(10)
         bot_info = await bot.get_me()
         LOGGER.info(f"<--- @{bot_info.username} Started --->")
         for user_id in Config.AUTH_USERS:
