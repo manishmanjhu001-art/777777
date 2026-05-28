@@ -1,8 +1,8 @@
 from config import Config
-from pyrogram import Client, idle
+from pyrogram import Client as bot, idle
+from pyrogram.errors import FloodWait
 import asyncio
 import logging
-from pyrogram.errors import FloodWait
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,44 +15,49 @@ LOGGER.info("Live log streaming to telegram.")
 
 plugins = dict(root="plugins")
 
-bot = Client(
-    "Bot",
-    bot_token=Config.BOT_TOKEN,
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH,
-    sleep_threshold=120,
-    plugins=plugins,
-    workers=10,
-)
-
-async def main():
-    while True:
-        try:
-            await bot.start()
-
-            bot_info = await bot.get_me()
-            LOGGER.info(f"<--- @{bot_info.username} Started --->")
-
-            for user_id in Config.AUTH_USERS:
-                try:
-                    await bot.send_message(
-                        chat_id=user_id,
-                        text=f"__Congrats! You Are DRM member ... if You get any error then contact me - {Config.CREDIT}__"
-                    )
-                except Exception as e:
-                    LOGGER.error(f"Failed to send message to user {user_id}: {e}")
-
-            await idle()
-            break
-
-        except FloodWait as e:
-            LOGGER.warning(f"FloodWait: Sleeping for {e.value} seconds")
-            await asyncio.sleep(e.value)
-
-        except Exception as e:
-            LOGGER.error(e)
-            await asyncio.sleep(10)
-
 if __name__ == "__main__":
-    asyncio.run(main())
+
+    bot = bot(
+        "Bot",
+        bot_token=Config.BOT_TOKEN,
+        api_id=Config.API_ID,
+        api_hash=Config.API_HASH,
+        sleep_threshold=120,
+        plugins=plugins,
+        workers=10,
+    )
+
+    async def main():
+
+        while True:
+
+            try:
+                await bot.start()
+
+                bot_info = await bot.get_me()
+                LOGGER.info(f"<--- @{bot_info.username} Started --->")
+
+                for user_id in Config.AUTH_USERS:
+                    try:
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text=f"__Congrats! You Are DRM member ... if You get any error then contact me - {Config.CREDIT}__ "
+                        )
+                    except Exception as e:
+                        LOGGER.error(f"Failed to send message to user {user_id}: {e}")
+                        continue
+
+                await idle()
+                break
+
+            except FloodWait as e:
+                LOGGER.warning(f"FloodWait: Sleeping for {e.value} seconds")
+                await asyncio.sleep(e.value)
+
+            except Exception as e:
+                LOGGER.error(e)
+                await asyncio.sleep(10)
+
+    asyncio.get_event_loop().run_until_complete(main())
+
     LOGGER.info("<--- Bot Stopped --->")
