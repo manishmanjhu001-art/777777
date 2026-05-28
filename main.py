@@ -1,8 +1,8 @@
 from config import Config
 from pyrogram import Client, idle
-from pyrogram.errors import FloodWait
 import asyncio
 import logging
+from pyrogram.errors import FloodWait
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +25,7 @@ bot = Client(
     workers=10,
 )
 
-async def start_bot():
+async def main():
     while True:
         try:
             await bot.start()
@@ -54,5 +54,5 @@ async def start_bot():
             await asyncio.sleep(10)
 
 if __name__ == "__main__":
-    asyncio.run(start_bot())
+    asyncio.run(main())
     LOGGER.info("<--- Bot Stopped --->")
